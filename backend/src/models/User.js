@@ -34,6 +34,10 @@ class User {
     return await db.users.update(id, updates);
   }
 
+  static async update(id, updates) {
+    return await db.users.update(id, updates);
+  }
+
   static async save(user) {
     return await db.users.update(user._id, user);
   }
