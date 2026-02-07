@@ -1,10 +1,15 @@
-// In-memory database (mock) - MongoDB muammosi uchun
+const mongoose = require('mongoose');
+
+// In-memory database (fallback)
 const users = new Map();
 const sessions = new Map();
 const chats = new Map();
 const messages = new Map();
 
-// Mock database functions
+// Check if MongoDB is configured
+const USE_MONGODB = !!process.env.MONGODB_URI;
+
+// Mock database functions (fallback)
 const db = {
   users: {
     create: async (userData) => {
@@ -142,8 +147,26 @@ const db = {
 };
 
 async function connectDatabase() {
+  // Try MongoDB first
+  if (USE_MONGODB) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      });
+      console.log('✅ Connected to MongoDB Atlas');
+      console.log('💾 Data will persist across restarts');
+      return;
+    } catch (error) {
+      console.error('❌ MongoDB connection failed:', error.message);
+      console.log('⚠️ Falling back to in-memory database');
+    }
+  }
+  
+  // Fallback to in-memory
   console.log('✅ Using in-memory database (mock mode)');
   console.log('💡 Data will be lost on server restart');
+  console.log('💡 Set MONGODB_URI environment variable to use MongoDB');
   
   // Create some test users for search
   const testUsers = [
