@@ -28,8 +28,11 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB
 connectDatabase();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - disable CSP for static files
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 
 // CORS configuration
 const allowedOrigins = process.env.FRONTEND_URL 
@@ -78,22 +81,17 @@ app.use('/api/messages', messageRoutes);
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../../frontend/dist');
   
-  // Serve static files with correct MIME types
-  app.use(express.static(frontendPath, {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
-      } else if (filePath.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css');
-      }
-    }
-  }));
+  console.log('📁 Serving static files from:', frontendPath);
+  
+  // Serve static files
+  app.use(express.static(frontendPath));
   
   // Handle React Router - send index.html for all non-API routes
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(frontendPath, 'index.html'));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
     }
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
 
@@ -102,8 +100,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
-app.use((req, res) => {
+// 404 handler - only for API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
     error: 'NOT_FOUND',
     message: 'Endpoint topilmadi'
