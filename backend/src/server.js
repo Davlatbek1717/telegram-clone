@@ -45,7 +45,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // In development, check allowed origins
+    // In development, allow localhost
+    const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
