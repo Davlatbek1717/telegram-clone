@@ -72,33 +72,34 @@ const authLimiter = rateLimit({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/chats', chatRoutes);
-app.use('/api/messages', messageRoutes);
-
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../../frontend/dist');
   
   console.log('📁 Serving static files from:', frontendPath);
   
-  // Serve static files
+  // Serve static files BEFORE API routes
   app.use(express.static(frontendPath));
-  
-  // Handle React Router - send index.html for all non-API routes
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-      return next();
-    }
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
 }
+
+// Routes
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Handle React Router - send index.html for all non-API routes
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 // 404 handler - only for API routes
 app.use('/api/*', (req, res) => {
@@ -111,6 +112,12 @@ app.use('/api/*', (req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
+  
+  // Don't send JSON error for static file requests
+  if (req.path.includes('/assets/') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
+    return res.status(404).send('Not found');
+  }
+  
   res.status(500).json({
     error: 'INTERNAL_SERVER_ERROR',
     message: 'Ichki server xatoligi'
