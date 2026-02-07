@@ -218,10 +218,13 @@ async function logout(req, res) {
     
     await Session.deleteOne({ tokenHash });
     
-    await User.findByIdAndUpdate(req.user.userId, {
-      status: 'offline',
-      lastSeen: new Date()
-    });
+    // Update user status
+    const user = await User.findById(req.user.userId);
+    if (user) {
+      user.status = 'offline';
+      user.lastSeen = new Date();
+      await User.save(user);
+    }
     
     return res.status(200).json({
       message: 'Tizimdan muvaffaqiyatli chiqildi'
@@ -296,8 +299,9 @@ async function updateProfile(req, res) {
 
     // Check username uniqueness
     if (username) {
-      const existingUser = await User.findOne({ username });
-      if (existingUser && existingUser._id !== userId) {
+      const allUsers = await User.findAll();
+      const existingUser = allUsers.find(u => u.username === username && u._id !== userId);
+      if (existingUser) {
         return res.status(409).json({
           error: 'USERNAME_EXISTS',
           message: 'Bu username allaqachon band'
@@ -311,7 +315,7 @@ async function updateProfile(req, res) {
     if (username !== undefined) updates.username = username;
     if (bio !== undefined) updates.bio = bio;
 
-    await User.findByIdAndUpdate(userId, updates);
+    await User.update(userId, updates);
     
     // Get updated user data
     const updatedUser = await User.findById(userId);
@@ -361,7 +365,7 @@ async function updateProfilePhoto(req, res) {
     // In production, you would validate the photo size (max 5MB)
     // and upload to a storage service like AWS S3, Cloudinary, etc.
 
-    await User.findByIdAndUpdate(userId, {
+    await User.update(userId, {
       profilePhotoUrl: photoUrl
     });
     
