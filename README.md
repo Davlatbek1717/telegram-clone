@@ -45,16 +45,19 @@ npm run dev
 
 ## 🚀 Deployment
 
-### Option 1: Single Service (Recommended)
-Deploy frontend and backend together as one service. See [RENDER_DEPLOY_SINGLE.md](./RENDER_DEPLOY_SINGLE.md)
+### ⚠️ MUHIM: Production da ishlashi uchun
 
-**Render.com Settings:**
+**MongoDB Atlas kerak!** In-memory database production da ishlamaydi.
+
+**Tezkor sozlash:** [QUICK_FIX.md](./QUICK_FIX.md) ni o'qing (10 daqiqa)
+
+**Batafsil qo'llanma:** [MONGODB_SETUP.md](./MONGODB_SETUP.md)
+
+### Render.com Settings:
 - **Root Directory:** `backend`
-- **Build Command:** `npm install && cd ../frontend && npm install && npm run build && cd ../backend`
+- **Build Command:** `npm install && cd ../frontend && npm install --include=dev && npm run build && cd ../backend`
 - **Start Command:** `npm start`
-
-### Option 2: Separate Services
-Deploy frontend and backend separately. See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
+- **Environment Variables:** `MONGODB_URI` (MongoDB Atlas dan)
 
 ## 🚀 Usage
 
